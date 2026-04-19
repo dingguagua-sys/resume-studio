@@ -1,1 +1,1 @@
-{"build":{"src":"package.json","use":"@vercel/static-build","config":{"distDir":"client/dist"}},"routes":[{"src":"/api/(.*)","dest":"/server/src/app.js"}]}
+{"routes":[{"src":"/api/(.*)","dest":"/server/src/app.js"}]}
