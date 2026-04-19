@@ -15,7 +15,7 @@ export default function Dashboard() {
   async function load() {
     setErr(null);
     try {
-      const { data } = await api.get<{ resumes: Row[] }>("/resumes");
+      const { data } = await api.get<{ resumes: Row[] }>("resumes");
       setRows(data.resumes);
     } catch {
       setErr("加载失败");
@@ -29,13 +29,13 @@ export default function Dashboard() {
   }, []);
 
   async function create() {
-    const { data } = await api.post<{ resume: { id: string } }>("/resumes", { title: "新简历" });
+    const { data } = await api.post<{ resume: { id: string } }>("resumes", { title: "新简历" });
     nav(`/app/resume/${data.resume.id}`);
   }
 
   async function remove(id: string) {
     if (!confirm("确定删除该简历？")) return;
-    await api.delete(`/resumes/${id}`);
+    await api.delete(`resumes/${id}`);
     setRows((r) => r.filter((x) => x.id !== id));
   }
 

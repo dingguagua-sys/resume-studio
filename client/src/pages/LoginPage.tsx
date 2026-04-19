@@ -2,6 +2,29 @@ import { useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
 
+function formatAuthError(ex: unknown): string {
+  if (typeof ex === "object" && ex && "response" in ex) {
+    const res = (ex as { response?: { status?: number; data?: unknown } }).response;
+    if (res?.status === 404) {
+      return "找不到登录接口(404)。请刷新页面重试；若已部署，请确认前端请求路径为 /api/auth/...。";
+    }
+    const d = res?.data;
+    if (typeof d === "string") {
+      const t = d.replace(/<[^>]+>/g, "").trim().slice(0, 200);
+      return t || `服务器返回 ${res?.status ?? ""}`;
+    }
+    if (d && typeof d === "object") {
+      const o = d as Record<string, unknown>;
+      const line = (v: unknown) => (typeof v === "string" ? v : "");
+      const parts = [line(o.error), line(o.hint), line(o.message)].filter(Boolean);
+      if (parts.length) return parts.join(" — ");
+    }
+    if (res?.status) return `请求失败（${res.status}），请稍后再试`;
+  }
+  if (ex instanceof Error) return ex.message;
+  return "请求失败，请稍后再试";
+}
+
 export default function LoginPage() {
   const { login, register } = useAuth();
   const nav = useNavigate();
@@ -21,12 +44,7 @@ export default function LoginPage() {
       else await register(email, password, displayName);
       nav("/app", { replace: true });
     } catch (ex: unknown) {
-      const data =
-        typeof ex === "object" && ex && "response" in ex
-          ? (ex as { response?: { data?: { error?: string; hint?: string } } }).response?.data
-          : undefined;
-      const parts = [data?.error, data?.hint].filter(Boolean);
-      setErr(parts.length ? parts.join(" — ") : "请求失败，请稍后再试");
+      setErr(formatAuthError(ex));
     } finally {
       setBusy(false);
     }

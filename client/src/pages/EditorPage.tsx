@@ -47,7 +47,7 @@ export default function EditorPage() {
           data: ResumeData;
           shareId?: string;
         };
-      }>(`/resumes/${id}`);
+      }>(`resumes/${id}`);
       if (cancelled) return;
       setTitle(body.resume.title);
       setTemplateId((body.resume.templateId as TemplateId) || "classic");
@@ -66,7 +66,7 @@ export default function EditorPage() {
   useEffect(() => {
     if (!loaded || !id) return;
     const t = window.setTimeout(() => {
-      void api.put(`/resumes/${id}`, {
+      void api.put(`resumes/${id}`, {
         title,
         templateId,
         sectionOrder,
@@ -103,7 +103,7 @@ export default function EditorPage() {
   const enableShare = useCallback(async () => {
     if (!id) return;
     setShareMsg(null);
-    const { data: body } = await api.post<{ shareId: string }>(`/resumes/${id}/share`);
+    const { data: body } = await api.post<{ shareId: string }>(`resumes/${id}/share`);
     setShareId(body.shareId);
     const url = `${window.location.origin}/share/${body.shareId}`;
     setShareMsg(`分享链接：${url}`);
@@ -117,7 +117,7 @@ export default function EditorPage() {
 
   const disableShare = useCallback(async () => {
     if (!id) return;
-    await api.delete(`/resumes/${id}/share`);
+    await api.delete(`resumes/${id}/share`);
     setShareId(undefined);
     setShareMsg("已关闭分享");
   }, [id]);

@@ -11,10 +11,14 @@ import { authMiddleware, signToken, userPublic, type AuthedRequest } from "./aut
 const app = express();
 app.use(express.json({ limit: "2mb" }));
 
-const clientOrigin = process.env.CLIENT_ORIGIN || "http://localhost:5173";
+/** 支持逗号分隔多个来源，避免预览域名与生产域名不一致导致线上 CORS 失败 */
+const clientOrigins = (process.env.CLIENT_ORIGIN || "http://localhost:5173")
+  .split(",")
+  .map((s) => s.trim())
+  .filter(Boolean);
 app.use(
   cors({
-    origin: [clientOrigin, /^https:\/\/.*\.vercel\.app$/],
+    origin: [...clientOrigins, /^https:\/\/[\w-]+\.vercel\.app$/],
     credentials: true,
   })
 );

@@ -41,7 +41,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
       try {
-        const { data } = await api.get<{ user: User }>("/me");
+        const { data } = await api.get<{ user: User }>("me");
         if (!cancelled) setUser(data.user);
       } catch {
         if (!cancelled) logout();
@@ -55,14 +55,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [token, logout]);
 
   const login = useCallback(async (email: string, password: string) => {
-    const { data } = await api.post<{ token: string; user: User }>("/auth/login", { email, password });
+    const { data } = await api.post<{ token: string; user: User }>("auth/login", { email, password });
     localStorage.setItem("resume_studio_token", data.token);
     setToken(data.token);
     setUser(data.user);
   }, []);
 
   const register = useCallback(async (email: string, password: string, displayName: string) => {
-    const { data } = await api.post<{ token: string; user: User }>("/auth/register", {
+    const { data } = await api.post<{ token: string; user: User }>("auth/register", {
       email,
       password,
       displayName,

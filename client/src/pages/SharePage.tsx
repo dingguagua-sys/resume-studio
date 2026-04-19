@@ -25,7 +25,7 @@ export default function SharePage() {
             sectionOrder: SectionKey[];
             data: ResumeData;
           };
-        }>(`/public/resumes/${shareId}`);
+        }>(`public/resumes/${shareId}`);
         if (cancelled) return;
         setTitle(body.resume.title);
         setTemplateId((body.resume.templateId as TemplateId) || "classic");
