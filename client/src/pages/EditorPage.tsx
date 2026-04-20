@@ -3,6 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import api from "../api/client";
 import { SortableSections } from "../components/SortableSections";
 import { exportResumePdf } from "../lib/exportPdf";
+import { exportResumeWord } from "../lib/exportWord";
 import { ResumeRenderer } from "../templates/ResumeRenderer";
 import {
   DEFAULT_SECTION_ORDER,
@@ -26,6 +27,7 @@ export default function EditorPage() {
   const [data, setData] = useState<ResumeData | null>(null);
   const [shareId, setShareId] = useState<string | undefined>();
   const [pdfBusy, setPdfBusy] = useState(false);
+  const [wordBusy, setWordBusy] = useState(false);
   const [pdfBanner, setPdfBanner] = useState<{ ok: boolean; text: string } | null>(null);
   const [shareMsg, setShareMsg] = useState<string | null>(null);
 
@@ -97,6 +99,26 @@ export default function EditorPage() {
       });
     } finally {
       setPdfBusy(false);
+    }
+  }, [data, title]);
+
+  const exportWord = useCallback(async () => {
+    if (!printRef.current || !data) return;
+    setPdfBanner(null);
+    setWordBusy(true);
+    try {
+      const { filename } = await exportResumeWord(printRef.current, title || "resume");
+      setPdfBanner({
+        ok: true,
+        text: `已生成「${filename}」。文件由浏览器保存到默认「下载」目录，可直接用 Word 打开。`,
+      });
+    } catch (e) {
+      setPdfBanner({
+        ok: false,
+        text: `Word 导出失败：${e instanceof Error ? e.message : String(e)}`,
+      });
+    } finally {
+      setWordBusy(false);
     }
   }, [data, title]);
 
@@ -483,6 +505,14 @@ export default function EditorPage() {
           </label>
           <button type="button" className="btn ghost" disabled={pdfBusy} onClick={() => void exportPdf()}>
             {pdfBusy ? "导出中…" : "导出 PDF"}
+          </button>
+          <button
+            type="button"
+            className="btn ghost"
+            disabled={wordBusy}
+            onClick={() => void exportWord()}
+          >
+            {wordBusy ? "导出中…" : "导出 DOCX"}
           </button>
           {shareId ? (
             <>
