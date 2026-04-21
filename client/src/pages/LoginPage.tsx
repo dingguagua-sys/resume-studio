@@ -2,6 +2,9 @@ import { useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
 
+const DEFAULT_LOGIN_EMAIL = "yyx1853100";
+const DEFAULT_LOGIN_PASSWORD = "123456";
+
 function formatAuthError(ex: unknown): string {
   if (typeof ex === "object" && ex && "response" in ex) {
     const res = (ex as { response?: { status?: number; data?: unknown } }).response;
@@ -19,19 +22,25 @@ function formatAuthError(ex: unknown): string {
       const parts = [line(o.error), line(o.hint), line(o.message)].filter(Boolean);
       if (parts.length) return parts.join(" — ");
     }
+    if (res?.status === 500) {
+      return "服务器返回 500。请确认后端服务和 MongoDB 已启动，再重试。";
+    }
     if (res?.status) return `请求失败（${res.status}），请稍后再试`;
   }
-  if (ex instanceof Error) return ex.message;
+  if (ex instanceof Error) {
+    if (/network error|failed to fetch|ecconnrefused/i.test(ex.message)) {
+      return "无法连接后端服务。请先启动后端（3001）并确保 MongoDB 可用。";
+    }
+    return ex.message;
+  }
   return "请求失败，请稍后再试";
 }
 
 export default function LoginPage() {
-  const { login, register } = useAuth();
+  const { login } = useAuth();
   const nav = useNavigate();
-  const [mode, setMode] = useState<"login" | "register">("login");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [displayName, setDisplayName] = useState("");
+  const [email, setEmail] = useState(DEFAULT_LOGIN_EMAIL);
+  const [password, setPassword] = useState(DEFAULT_LOGIN_PASSWORD);
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -40,8 +49,7 @@ export default function LoginPage() {
     setErr(null);
     setBusy(true);
     try {
-      if (mode === "login") await login(email, password);
-      else await register(email, password, displayName);
+      await login(email, password);
       nav("/app", { replace: true });
     } catch (ex: unknown) {
       setErr(formatAuthError(ex));
@@ -55,33 +63,14 @@ export default function LoginPage() {
       <div className="auth-card">
         <h1 className="auth-title">Resume Studio</h1>
         <p className="auth-sub">在线拖拽编辑 · 多模板 · PDF 导出 · 分享链接</p>
-        <div className="auth-tabs">
-          <button type="button" className={mode === "login" ? "on" : ""} onClick={() => setMode("login")}>
-            登录
-          </button>
-          <button
-            type="button"
-            className={mode === "register" ? "on" : ""}
-            onClick={() => setMode("register")}
-          >
-            注册
-          </button>
-        </div>
         <form onSubmit={onSubmit} className="auth-form">
-          {mode === "register" ? (
-            <label className="field">
-              <span>昵称</span>
-              <input value={displayName} onChange={(e) => setDisplayName(e.target.value)} autoComplete="name" />
-            </label>
-          ) : null}
           <label className="field">
-            <span>邮箱</span>
+            <span>账号</span>
             <input
-              type="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              autoComplete="email"
+              autoComplete="username"
             />
           </label>
           <label className="field">
@@ -92,12 +81,12 @@ export default function LoginPage() {
               minLength={6}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              autoComplete={mode === "login" ? "current-password" : "new-password"}
+              autoComplete="current-password"
             />
           </label>
           {err ? <div className="form-error">{err}</div> : null}
           <button type="submit" className="btn primary stretch" disabled={busy}>
-            {busy ? "提交中…" : mode === "login" ? "进入工作台" : "创建账号"}
+            {busy ? "提交中…" : "进入工作台"}
           </button>
         </form>
         <Link to="/" className="auth-back">

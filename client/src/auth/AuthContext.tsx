@@ -10,6 +10,8 @@ import {
 import api from "../api/client";
 
 export type User = { id: string; email: string; displayName: string };
+const DEFAULT_LOGIN_EMAIL = "yyx1853100";
+const DEFAULT_LOGIN_PASSWORD = "123456";
 
 type AuthState = {
   user: User | null;
@@ -37,7 +39,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let cancelled = false;
     (async () => {
       if (!token) {
-        setLoading(false);
+        try {
+          const { data } = await api.post<{ token: string; user: User }>("auth/login", {
+            email: DEFAULT_LOGIN_EMAIL,
+            password: DEFAULT_LOGIN_PASSWORD,
+          });
+          if (cancelled) return;
+          localStorage.setItem("resume_studio_token", data.token);
+          setToken(data.token);
+          setUser(data.user);
+        } catch {
+          if (!cancelled) setLoading(false);
+        }
         return;
       }
       try {
